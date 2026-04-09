@@ -1,20 +1,9 @@
 """
-Shared experiment runner. Usage:
+BitsAndBytes experiment runner. Usage:
     python scripts/run_experiment.py scripts/configs/llama32_3b.yaml
 """
-import sys
-import os
-
-# On Windows the default encoding is GBK, which breaks jailbreakbench's
-# JSON reads and HuggingFace terminal output. Restart via subprocess with
-# PYTHONUTF8=1 so the child process boots into UTF-8 mode from the start.
-if not os.environ.get("PYTHONUTF8") and sys.flags.utf8_mode == 0:
-    import subprocess
-    result = subprocess.run(
-        [sys.executable] + sys.argv,
-        env={**os.environ, "PYTHONUTF8": "1"},
-    )
-    sys.exit(result.returncode)
+from common import ensure_utf8
+ensure_utf8()
 
 import argparse
 import json
@@ -22,48 +11,15 @@ from datetime import datetime
 from pathlib import Path
 
 import torch
-import yaml
-import jailbreakbench as jbb
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
-
-def load_config(yaml_path: str) -> dict:
-    with open(yaml_path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+from common import load_config, load_all_prompts, build_messages
 
 
 def get_compute_dtype():
     if torch.cuda.is_available() and torch.cuda.is_bf16_supported():
         return torch.bfloat16
     return torch.float16
-
-
-def load_all_prompts(n):
-    artifact = jbb.read_artifact(
-        method="PAIR",
-        model_name="vicuna-13b-v1.5",
-    )
-    prompts = []
-    for jb in artifact.jailbreaks[:n]:
-        prompts.append({
-            "prompt_text": jb.prompt,
-            "meta": {
-                "artifact_method": "PAIR",
-                "artifact_source_model": "vicuna-13b-v1.5",
-                "artifact_index": jb.index,
-                "goal": jb.goal,
-                "behavior": jb.behavior,
-                "category": jb.category,
-            },
-        })
-    return prompts
-
-
-def build_messages(user_prompt):
-    return [
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": user_prompt},
-    ]
 
 
 def generate_response(model, tokenizer, messages, max_new_tokens=256):

@@ -1,0 +1,11 @@
+model_name: "Qwen2.5-3B-Instruct"
+num_prompts: 100
+results_subdir: "qwen"
+experiment_prefix: "qwen25_gguf"
+gguf_variants:
+  - label: "gguf_q4_0"
+    path: "models/gguf/qwen2.5-3b-instruct-q4_0.gguf"
+  - label: "gguf_q4_k_m"
+    path: "models/gguf/qwen2.5-3b-instruct-q4_k_m.gguf"
+  - label: "gguf_q8_0"
+    path: "models/gguf/qwen2.5-3b-instruct-q8_0.gguf"

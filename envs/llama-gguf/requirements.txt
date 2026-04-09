@@ -1,0 +1,13 @@
+# Python 3.10, CUDA 12.1
+#
+# Install llama-cpp-python with CUDA support (Windows):
+#   set CMAKE_ARGS=-DGGML_CUDA=on
+#   pip install llama-cpp-python==0.3.8
+#
+# Or use a pre-built wheel from:
+#   https://github.com/abetlen/llama-cpp-python/releases
+
+llama-cpp-python==0.3.8
+PyYAML==6.0.3
+jailbreakbench==1.0.0
+litellm==1.48.0
