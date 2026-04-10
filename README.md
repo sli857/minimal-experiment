@@ -81,7 +81,7 @@ For each model and each quantization condition:
 
 1. Load the model under the specified condition
 2. For each PAIR jailbreak prompt, construct a chat message (system + user) and generate a response
-3. Save all prompt-response pairs to a JSON file under `results/<model>/`
+3. Save all prompt-response pairs to a JSON file under `results_reformatted/<model>/` (legacy runs from before the schema change live in `results_backup/<model>/`)
 
 See `scripts/run_experiment.py` and `scripts/configs/` for implementation details.
 
