@@ -2,17 +2,14 @@
 GGUF experiment runner. Usage:
     python scripts/run_gguf_experiment.py scripts/configs/llama32_3b_gguf.yaml
 """
+from common import load_config, load_all_prompts, build_messages
+from llama_cpp import Llama
+from pathlib import Path
+from datetime import datetime
+import json
+import argparse
 from common import ensure_utf8
 ensure_utf8()
-
-import argparse
-import json
-from datetime import datetime
-from pathlib import Path
-
-from llama_cpp import Llama
-
-from common import load_config, load_all_prompts, build_messages
 
 
 def generate_response_gguf(llm, messages, max_tokens=256):
@@ -116,7 +113,8 @@ def main():
     }
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    out_path = results_dir / f"{experiment_prefix}_pair{num_prompts}_{timestamp}.json"
+    out_path = results_dir / \
+        f"{experiment_prefix}_pair{num_prompts}_{timestamp}.json"
     with out_path.open("w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
