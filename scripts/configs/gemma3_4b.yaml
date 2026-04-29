@@ -1,0 +1,4 @@
+model_id: "models/hf/gemma-3-4b-it"
+num_prompts: 100
+results_subdir: "gemma"
+experiment_prefix: "gemma3_4b_bnb"

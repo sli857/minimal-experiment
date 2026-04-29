@@ -1,9 +1,9 @@
 """
-BitsAndBytes experiment runner. Usage:
-    python scripts/run_experiment.py scripts/configs/llama32_3b.yaml
+Baseline experiment runner. Usage:
+    python scripts/run_baseline.py scripts/configs/llama32_3b.yaml
 """
 from common import load_config, load_all_prompts, build_messages
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 from pathlib import Path
 from datetime import datetime
@@ -94,46 +94,9 @@ def main():
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
-    # --- 8-bit quantized ---
-    print(f"\n=== 8-bit INT8 ({compute_dtype} compute) ===")
-    quant_config_8bit = BitsAndBytesConfig(
-        load_in_8bit=True,
-    )
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
-    model = AutoModelForCausalLM.from_pretrained(
-        model_id,
-        device_map="auto",
-        quantization_config=quant_config_8bit,
-    )
-    quant_8bit_responses = run_config(
-        model, tokenizer, prompts, "quantized_8bit")
-    del model
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-
-    # --- 4-bit quantized ---
-    print(f"\n=== 4-bit NF4 ({compute_dtype} compute) ===")
-    quant_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_compute_dtype=compute_dtype,
-        bnb_4bit_quant_type="nf4",
-    )
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
-    model = AutoModelForCausalLM.from_pretrained(
-        model_id,
-        device_map="auto",
-        quantization_config=quant_config,
-    )
-    quant_responses = run_config(model, tokenizer, prompts, "quantized_4bit")
-    del model
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-
     # --- Assemble results ---
     results = []
-    for p, baseline_out, quant_8bit_out, quant_out in zip(
-        prompts, baseline_responses, quant_8bit_responses, quant_responses
-    ):
+    for p, baseline_out in zip(prompts, baseline_responses):
         results.append({
             "prompt_index": p["meta"]["artifact_index"],
             "goal": p["meta"]["goal"],
@@ -141,21 +104,18 @@ def main():
             "category": p["meta"]["category"],
             "outputs": {
                 "baseline": baseline_out,
-                "quantized_8bit": quant_8bit_out,
-                "quantized_4bit": quant_out,
             },
             "manual_labels": {
-                variant: {
+                "baseline": {
                     "willingness": None,
                     "prompt_alignment": None,
                     "details": None,
                 }
-                for variant in ("baseline", "quantized_8bit", "quantized_4bit")
             },
         })
 
     output = {
-        "experiment_name": f"{experiment_prefix}_baseline_vs_8bit_vs_4bit_pair{num_prompts}",
+        "experiment_name": f"{experiment_prefix}_baseline_only_pair{num_prompts}",
         "base_model": model_id,
         "artifact": {
             "method": "PAIR",
@@ -163,9 +123,6 @@ def main():
         },
         "settings": {
             "baseline_dtype": str(compute_dtype),
-            "quantized_8bit_mode": "bitsandbytes_8bit_int8",
-            "quantized_4bit_mode": "bitsandbytes_4bit_nf4",
-            "quantized_compute_dtype": str(compute_dtype),
             "max_new_tokens": 256,
             "do_sample": False,
         },
@@ -174,8 +131,7 @@ def main():
     }
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    out_path = results_dir / \
-        f"{experiment_prefix}_pair{num_prompts}_{timestamp}.json"
+    out_path = results_dir / f"{experiment_prefix}_baseline_only_pair{num_prompts}_{timestamp}.json"
     with out_path.open("w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
